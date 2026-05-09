@@ -86,21 +86,21 @@
 
     /* ── BT21 FRAME IMAGE ── */
     #frame-wrap {
-      position: relative;
-      width: min(96vw, 600px);
-      aspect-ratio: 3 / 4;
-      flex-shrink: 0;
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
       pointer-events: none;
+      z-index: 5;
     }
-
+    
     #bt21-frame {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
-      object-fit: fill;
+      object-fit: cover;
       pointer-events: none;
-      z-index: 2;
     }
 
     /* ── BOTTOM CONTROLS ── */
