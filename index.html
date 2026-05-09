@@ -95,7 +95,7 @@
     }
 
     #bt21-frame {
-      position: contain;
+      position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
@@ -248,7 +248,7 @@
 <div id="perm-screen">
   <img id="perm-frame-preview" src="BT21frame.png" alt="BT21 frame preview" />
   <h1>BT21 Selfie Cam</h1>
-  <p>Take a selfie with the BT21 frame! 💜</p>
+  <p>Take a selfie with the BT21 frame! Each photo saves automatically to your device. 💜</p>
   <button id="start-btn">📸 OPEN CAMERA</button>
 </div>
 
@@ -428,6 +428,22 @@
 
   document.addEventListener('keydown', e => {
     if (e.code === 'Space' || e.code === 'Enter') shutter.click();
+  });
+
+  // ── Stop camera when tab is hidden, restart when they return ──
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+        shutter.classList.add('disabled');
+      }
+    } else {
+      // Only restart if camera was already running (not on perm screen)
+      if (!stream && permScreen.style.display === 'none') {
+        startCamera(facingMode);
+      }
+    }
   });
 
   overlay.style.display = 'none';
