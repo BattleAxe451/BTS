@@ -46,10 +46,10 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      padding: env(safe-area-inset-top, 16px) 0 env(safe-area-inset-bottom, 16px);
+      justify-content: flex-end;
+      padding: 0 0 env(safe-area-inset-bottom, 16px);
       pointer-events: none;
-      z-index: 10;
+      z-index: 15;
     }
 
     /* ── TOP BAR ── */
@@ -84,7 +84,7 @@
       -webkit-backdrop-filter: blur(6px);
     }
 
-    /* ── BT21 FRAME IMAGE ── */
+    /* ── BT21 FRAME IMAGE - full screen fixed overlay ── */
     #frame-wrap {
       position: fixed;
       inset: 0;
@@ -93,7 +93,7 @@
       pointer-events: none;
       z-index: 5;
     }
-    
+
     #bt21-frame {
       position: absolute;
       inset: 0;
@@ -248,25 +248,20 @@
 <div id="perm-screen">
   <img id="perm-frame-preview" src="BT21frame.png" alt="BT21 frame preview" />
   <h1>BT21 Selfie Cam</h1>
-  <p>Take a selfie with the BT21 frame! 💜</p>
+  <p>Take a selfie with the BT21 frame! Each photo saves automatically to your device. 💜</p>
   <button id="start-btn">📸 OPEN CAMERA</button>
 </div>
 
 <!-- Live camera feed -->
 <video id="video" autoplay playsinline muted></video>
 
-<!-- UI overlay --
- <div id="overlay">
-  <div id="topbar">
-    <span class="logo">💜 BT21</span>
-    <span id="counter-display">PHOTO #<span id="photo-num">1</span></span>
-  </div>>
+<!-- BT21 frame - full screen fixed overlay -->
+<div id="frame-wrap">
+  <img id="bt21-frame" src="BT21frame.png" alt="BT21 photo frame" crossorigin="anonymous" />
+</div>
 
-  <!-- BT21 frame sits over the live video -->
-  <div id="frame-wrap">
-    <img id="bt21-frame" src="BT21frame.png" alt="BT21 photo frame" crossorigin="anonymous" />
-  </div>
-
+<!-- UI overlay - controls only -->
+<div id="overlay">
   <div id="controls">
     <button id="flip-btn" title="Flip camera">
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -303,19 +298,15 @@
   const toast      = document.getElementById('toast');
   const permScreen = document.getElementById('perm-screen');
   const startBtn   = document.getElementById('start-btn');
-  const photoNum   = document.getElementById('photo-num');
   const errorMsg   = document.getElementById('error-msg');
   const overlay    = document.getElementById('overlay');
+  const frameWrap  = document.getElementById('frame-wrap');
 
   const BASE_NAME  = 'BT21-selfie';
   let photoCount   = 1;
   let facingMode   = 'user';
   let stream       = null;
   let shooting     = false;
-
-  function updateCounter() {
-    photoNum.textContent = photoCount;
-  }
 
   let toastTimer;
   function showToast(msg) {
@@ -350,6 +341,7 @@
     if (stream) {
       permScreen.style.display = 'none';
       overlay.style.display = 'flex';
+      frameWrap.style.display = 'block';
     } else {
       startBtn.textContent = 'TRY AGAIN';
       startBtn.disabled = false;
@@ -423,7 +415,6 @@
 
         showToast(`💜 Saved as ${filename}`);
         photoCount++;
-        updateCounter();
         shooting = false;
       }, 'image/jpeg', 0.93);
     }
@@ -440,7 +431,7 @@
   });
 
   overlay.style.display = 'none';
-  updateCounter();
+  frameWrap.style.display = 'none';
 </script>
 </body>
 </html>
