@@ -248,7 +248,7 @@
 <div id="perm-screen">
   <img id="perm-frame-preview" src="BT21frame.png" alt="BT21 frame preview" />
   <h1>BT21 Selfie Cam</h1>
-  <p>Take a selfie with the BT21 frame! 💜</p>
+  <p>Take a selfie with the BT21 frame! Each photo saves automatically to your device. 💜</p>
   <button id="start-btn">📸 OPEN CAMERA</button>
 </div>
 
@@ -368,39 +368,25 @@
     const vw = video.videoWidth  || 640;
     const vh = video.videoHeight || 480;
 
-    // Crop video to 3:4 portrait, centred
-    const cropRatio = 3 / 4;
-    let cropW, cropH, cropX, cropY;
-    if (vw / vh > cropRatio) {
-      cropH = vh;
-      cropW = Math.round(vh * cropRatio);
-      cropX = Math.round((vw - cropW) / 2);
-      cropY = 0;
-    } else {
-      cropW = vw;
-      cropH = Math.round(vw / cropRatio);
-      cropX = 0;
-      cropY = Math.round((vh - cropH) / 2);
-    }
-
-    canvas.width  = cropW;
-    canvas.height = cropH;
+    // Use the full camera frame — no cropping
+    canvas.width  = vw;
+    canvas.height = vh;
     const ctx = canvas.getContext('2d');
 
     // 1. Draw video onto canvas (mirrored for front cam)
     if (facingMode === 'user') {
       ctx.save();
-      ctx.translate(cropW, 0);
+      ctx.translate(vw, 0);
       ctx.scale(-1, 1);
-      ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+      ctx.drawImage(video, 0, 0, vw, vh);
       ctx.restore();
     } else {
-      ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+      ctx.drawImage(video, 0, 0, vw, vh);
     }
 
-    // 2. Composite BT21 frame on top
+    // 2. Composite BT21 frame on top (scaled to full canvas size)
     function drawFrameAndSave() {
-      ctx.drawImage(frameImg, 0, 0, cropW, cropH);
+      ctx.drawImage(frameImg, 0, 0, vw, vh);
 
       const filename = `${BASE_NAME}-${String(photoCount).padStart(3, '0')}.jpg`;
       canvas.toBlob(blob => {
