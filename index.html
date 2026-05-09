@@ -149,7 +149,19 @@
     #shutter:active { transform: scale(0.91); box-shadow: 0 0 0 6px rgba(155,89,208,0.4), 0 4px 14px rgba(0,0,0,0.5); }
     #shutter.disabled { opacity: 0.4; cursor: default; }
 
-    .ctrl-spacer { width: 50px; }
+    #share-btn {
+      width: 50px; height: 50px;
+      border-radius: 50%;
+      background: rgba(155, 89, 208, 0.5);
+      border: 1.5px solid rgba(192, 132, 252, 0.5);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: background 0.2s, transform 0.2s;
+    }
+    #share-btn:active { background: rgba(192,132,252,0.5); transform: scale(0.9); }
+    #share-btn.disabled { opacity: 0.4; cursor: default; }
 
     /* ── FLASH ── */
     #flash {
@@ -248,7 +260,7 @@
 <div id="perm-screen">
   <img id="perm-frame-preview" src="BT21frame.png" alt="BT21 frame preview" />
   <h1>BT21 Selfie Cam</h1>
-  <p>Take a selfie with the BT21 frame! 💜</p>
+  <p>Take a selfie with the BT21 frame! Each photo saves automatically to your device. 💜</p>
   <button id="start-btn">📸 OPEN CAMERA</button>
 </div>
 
@@ -270,7 +282,13 @@
       </svg>
     </button>
     <button id="shutter" title="Take photo" class="disabled"></button>
-    <div class="ctrl-spacer"></div>
+    <button id="share-btn" title="Share last photo" class="disabled">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+        <polyline points="16 6 12 2 8 6"/>
+        <line x1="12" y1="2" x2="12" y2="15"/>
+      </svg>
+    </button>
   </div>
 </div>
 
@@ -293,6 +311,7 @@
   const canvas     = document.getElementById('canvas');
   const frameImg   = document.getElementById('frame-img');
   const shutter    = document.getElementById('shutter');
+  const shareBtn   = document.getElementById('share-btn');
   const flipBtn    = document.getElementById('flip-btn');
   const flash      = document.getElementById('flash');
   const toast      = document.getElementById('toast');
@@ -303,10 +322,12 @@
   const frameWrap  = document.getElementById('frame-wrap');
 
   const BASE_NAME  = 'BT21-selfie';
-  let photoCount   = 1;
+  // ── Persistent counter via localStorage ──
+  let photoCount   = parseInt(localStorage.getItem('bt21-photo-count') || '1', 10);
   let facingMode   = 'user';
   let stream       = null;
   let shooting     = false;
+  let lastBlob     = null;  // stores last photo for sharing
 
   let toastTimer;
   function showToast(msg) {
@@ -390,6 +411,10 @@
 
       const filename = `${BASE_NAME}-${String(photoCount).padStart(3, '0')}.jpg`;
       canvas.toBlob(blob => {
+        lastBlob = blob;
+        shareBtn.classList.remove('disabled');
+
+        // Auto-download
         const url = URL.createObjectURL(blob);
         const a   = document.createElement('a');
         a.href     = url;
@@ -401,6 +426,8 @@
 
         showToast(`💜 Saved as ${filename}`);
         photoCount++;
+        // ── Save counter so it persists between sessions ──
+        localStorage.setItem('bt21-photo-count', photoCount);
         shooting = false;
       }, 'image/jpeg', 0.93);
     }
@@ -409,6 +436,23 @@
       drawFrameAndSave();
     } else {
       frameImg.onload = drawFrameAndSave;
+    }
+  });
+
+  // ── Share last photo ──
+  shareBtn.addEventListener('click', async () => {
+    if (!lastBlob || shareBtn.classList.contains('disabled')) return;
+    const filename = `${BASE_NAME}-${String(photoCount - 1).padStart(3, '0')}.jpg`;
+    const file = new File([lastBlob], filename, { type: 'image/jpeg' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'BT21 Selfie' });
+      } catch (err) {
+        if (err.name !== 'AbortError') showToast('⚠ Share failed');
+      }
+    } else {
+      // Fallback for browsers without Web Share API
+      showToast('Sharing not supported — photo was auto-saved 💜');
     }
   });
 
